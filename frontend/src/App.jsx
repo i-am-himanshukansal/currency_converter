@@ -23,12 +23,28 @@ const App = () => {
     localStorage.setItem("history",JSON.stringify(updatedHistory));
   }
   const convertCurrencies = async() => {
-    const {data}  = await axios.get(`http://localhost:4000/convert/?base_currency=${basecurrency}&currencies=${selectedCurrency}`)
-    let result = Object.values(data.data)[0]*amount;
-    let roundOffResult = result.toFixed(2);
-    const countryCode = currencies.find(elem=> elem.code===selectedCurrency);
-
+    try {
+      const {data}  = await axios.get(`http://localhost:4000/convert/?base_currency=${baseCurrency}&currencies=${selectedCurrency}`)
+      let result = Object.values(data.data)[0]*amount;
+      let roundOffResult = result.toFixed(2);
+      const countryCode = currencies.find(elem=> elem.code===selectedCurrency);
+      savedHistory({
+        result : roundOffResult,
+        flag : countryCode.flag,
+        code : countryCode.code,
+        symbol : countryCode.symbol,
+        countryName : countryCode.name,
+        date : new Date().toLocaleString(),
+      });
+    } catch (error) {
+      alert("Error fetching conversion rates");
+    }
   };
+  const deleteHistoryItem=(index)=>{
+    const updatedHistory = conversionHistory.filter((_,i)=> i!==index);
+    localStorage.setItem("history",JSON.stringify(updatedHistory));
+    setConversionHistory(updatedHistory);
+  }
 
   return (
     <div className="h-screen bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center px-4 md:px-8">
@@ -116,10 +132,10 @@ const App = () => {
                       <img src={`https://flagsapi.com/${(element.flag).toUpperCase()}/shiny/64.png`} alt="country flag" className="w-11 h-11 " />
                       <p className="flex flex-col gap-1 text-gray-500 font-medium ">
                         <span className="text-xl font-semibold text-black">{element.symbol}{element.result}</span>
-                        <span>{element.code}-{element.name}</span>
+                        <span>{element.code}-{element.countryName}</span>
                       </p>
                       </div>       
-                      <span className="text-gray-500 font-bold text-xl hover:cursor-pointer">x</span>             
+                      <span className="text-gray-500 font-bold text-xl hover:cursor-pointer" onClick={()=>deleteHistoryItem(index)}>x</span>             
                   </li>
                 )
               })
